@@ -3,6 +3,8 @@
 #include <iostream>	// Эта - часть библиотеки STL (Standard Template Library)
 #include <climits>			// Хранит ограничения для целых типов
 #include <cfloat> // Хранит ограничения для чисел с плавающей точкой
+#include <bitset>
+#include <limits>
 
 using namespace std;		// Обеспечивает видимость имен STL
 #define stop __asm("nop")// Эта макроподстановка упрощает установку точек останова
@@ -333,6 +335,36 @@ int  main()
 	//	  |       /    \
 	//	  |______/      \__________  x
 	//	  0      1   2   3
+
+	{
+		double x = 0.;
+		while (x < 5) {
+			if (x <= 1) {
+				cout << "X: " << x << "; Y: 0" << endl;
+			}
+			else if (x <= 2) {
+				cout << "X: " << x << "; Y: " << 2. * x - 2 << endl;
+			}
+			else if (x <= 3) {
+				cout << "X: " << x << "; Y: " << -2. * x + 6 << endl;
+			}
+			else {
+				cout << "X: " << x << "; Y: 0" << endl;
+			}
+			x += 0.1;
+		}
+
+		cout << endl;
+
+		x = 0.;
+		while (x < 5) {
+			double y = (x <= 1) ? 0.0 : (x <= 2) ? 2. * x - 2 : (x <= 3) ? -2. * x + 6 : 0.0;
+			cout << "X: " << x << "; Y: " << y << endl;
+			x += 0.1;
+		}
+	}
+
+
 	//	 Реалируйте 2 варианта этого алгоритма:   1. Используйте операторы if	 2. Используйте тернарные операции    ? :
 
 	//	Напишите фрагмент, который с помощью for и switch реализует следующую логику. Если пользователь ввел:
@@ -342,9 +374,59 @@ int  main()
 	//	символ 'Esc', ваш алгоритм выводит  "to quit use 'q'"
 	//	символ 'q',   ваш алгоритм выводит  "Bye" и выходит из цикла ввода
 
+	{
+		char simbol;
+		int count_simbols = 0;
+		bool running = true;
+
+		cout << "Character options for input: 'a', 'b', 'c', 'Esc', 'q'." << endl;
+
+		for (;running ;) {
+			cout << "Enter a character: ";
+			cin >> simbol;
+			cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+
+			count_simbols += 1;
+			switch (simbol)
+			{
+			case 'a':
+				cout << "\"Ok\"" << endl;
+				break;
+			case 'b':
+				cout << "\a" << endl;
+				break;
+			case 'c':
+				cout << "Number of characters entered: " << count_simbols << endl;
+				break;
+			case 27:
+				cout << "to quit use 'q'" << endl;
+				break;
+			case 'q':
+				cout << "Bye" << endl; 
+				running = false;
+				break;
+			default:
+				cout << "The character was entered incorrectly. Please try again." << endl;
+			}
+		}
+	}
+
 	//	Побитовые операции:  |, &, ~, ^ и сдвиги >>, <<
 	//	Поменяйте местами байты переменной flags и выведите результат в консолное окно unsigned short flags = 0xaabb;
 	//	Ваш код
+
+	{
+		unsigned short flags = 0xaabb;
+
+		cout << "Flags before: " <<  hex << flags << endl;
+
+		unsigned short first_byte = 0x00ff, second_byte = 0xff00;
+		first_byte &= flags; second_byte &= flags;
+		first_byte <<= 8; second_byte >>= 8;
+		flags = first_byte | second_byte;
+
+		cout << "Flags after: " <<  hex << flags << endl;
+	}
 
 	//	Для вывода в шестнадцатеричном виде используйте  cout <<"\n bits = " << hex << flags;
 	//	В переменной unsigned char byte = 0x26; 
@@ -352,5 +434,32 @@ int  main()
 	//	- инвертируйте два младших бита. Выведите результат. 
         //      - обнулите 4 младших бита. Выведите результат.
 	//	cout <<endl << hex << flags << endl<<dec<<flags;    
-	cout << "\n\n";
+
+	{
+		unsigned char byte = 0x26; 
+		int count = 0;
+
+		cout << "v1. Byte before: " << hex << (int)byte << " : " << bitset<8>(byte) << endl;
+
+		byte |= (1 << 3);
+
+		cout << "v1. Byte after: " << hex << (int)byte << " : " << bitset<8>(byte) << '\n';
+
+		// ---------------------
+
+		cout << "v2. Byte before: " << hex << (int)byte << " : " << bitset<8>(byte) << endl;
+
+		byte ^= 0x03;
+
+		cout << "v2. Byte after: " << hex << (int)byte << " : " << bitset<8>(byte) << '\n';
+
+		// ---------------------
+		
+		cout << "v3. Byte before: " << hex << (int)byte << " : " << bitset<8>(byte) << endl;
+
+		byte &= 240;
+
+		cout << "v3. Byte after: " << hex << (int)byte << " : " << bitset<8>(byte) << '\n';
+	}
+
 }	// Конец функции main()
