@@ -53,4 +53,5 @@ int MyString::GetLength()
 MyString& MyString::operator= (MyString& v) {
 	m_pStr = 0;
 	Copy(v.GetString());
+	return *this;
 }
