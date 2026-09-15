@@ -7,10 +7,12 @@
 #include "MyString.h"
 #include <iostream>	
 #include <vector>	
+#include <list>	
+#include <algorithm>
 
 using namespace std;
 
-//============= Шаблон функции для вывода с помощью итератора #TODO: просмотреть что здесь происходит
+//============= Шаблон функции для вывода с помощью итератора
 
 template <class T> void pr(T& v, string s)
 {
@@ -236,7 +238,7 @@ int main()
 	// Проверим параметры вектора. Затем изменим размер вектора и его заполнение
 	// (метод - resize()) и вновь проверим параметры.
 	
-	vector<double> vd(2, 222.0); // TODO
+	vector<double> vd(2, 222.0);
 	pr (vd, "Vector of doubles");
 	n = vd.size();
 	cout << "\n\nN (size): " << n << endl;
@@ -295,8 +297,14 @@ int main()
 
 	// Создайте вектор указателей на Vector и инициализируйте его адресами
 	// объектов класса Vector
-	
-	vector<Vector*> vp(2, &Vector(1, 1));
+	Vector* shared_vec1 = new Vector(1, 1);
+	Vector* shared_vec2 = new Vector(1, 5);
+	Vector* shared_vec3 = new Vector(4, 2);
+	Vector* shared_vec4 = new Vector(3, 2);
+	Vector* shared_vec5 = new Vector(8, 9);
+	Vector* shared_vec6 = new Vector(3, 3);
+	vector<Vector*> vp(2, shared_vec1);
+	vector<Vector*> vp_for_copy(2, shared_vec1);
 	
 	cout << "\n\nvector of pointers to Vector\n";
 	
@@ -305,32 +313,48 @@ int main()
 
 	// Научитесь пользоваться методом assign и операцией
 	// присваивания = для контейнеров типа vector.
-	vp.assign(5, &Vector(1, 1)); 
+	vp.assign({shared_vec1}); 
+	vp_for_copy = {shared_vec2, shared_vec3, shared_vec4};
 
 	cout << "\n\nAfter assign\n";
 	for (int i=0;  i < vp.size();  i++)
 		vp[i]->Out();
 	
-	vp.assign(vv.begin(), vv.begin() + 1); // ?
+	vp.assign(vp_for_copy.begin(), vp_for_copy.begin() + 2);
 
 	cout << "\n\nAfter assign\n";
 	for (int i=0;  i < vp.size();  i++)
 		vp[i]->Out();
 
-	vp.assign({&Vector(1, 5), &Vector(4, 2)}); 
+	vp.assign({shared_vec5, shared_vec6}); 
 
 	cout << "\n\nAfter assign\n";
 	for (int i=0;  i < vp.size();  i++)
-		vp[i]->Out(); // #TODO
+		vp[i]->Out();
 
 
 	// Декларируйте новый вектор указателей на Vector и инициализируйте его 
 	// с помощью второй версии assign
 	//vpNew.assign 
 	
-	// cout << "\n\nNew vector after assign\n";
-	// for (int i=0;  i < vpNew.size();  i++)
-	// 	vpNew[i]->Out(); // #TODO
+	vector<Vector*> vpNew;
+
+
+	vpNew.assign(vp.begin(), vp.end());
+
+	cout << "\n\nNew vector after assign\n";
+	for (size_t i = 0; i < vpNew.size(); i++) {
+		vpNew[i]->Out();
+		cout << " ";
+	}
+	cout << endl;	
+
+	delete shared_vec1;
+	delete shared_vec2;
+	delete shared_vec3;
+	delete shared_vec4;
+	delete shared_vec5;
+	delete shared_vec6;
 
 
 	// На базе шаблона vector создание двухмерный массив и
@@ -341,7 +365,7 @@ int main()
 	//========= Прямоугольная матрица
 	vector<vector<double>> matrix(3, vector<double>(6));
 	for (int i = 0; i < matrix.size(); i++) {
-		for (int j = 0; matrix[i].size(); j++) {
+		for (int j = 0; j < matrix[i].size(); j++) {
 			matrix[i][j] = i * j;
 		}
 	}
@@ -406,9 +430,10 @@ int main()
 	//а с помощью [] присвойте нечетным элементам вектора vChar2 значения
 	//массива {'K','U','K','U'}.
 
-	vector<char> vChar2(8);
-	vChar2 = {vchar.at(0), vchar.at(1), vchar.at(2), vchar.at(3)};
-	vChar2[1] = 'K';
+	vector<char> vChar2(8, ' ');
+	vChar2[0] = vchar.at(0);
+	vChar2[1] = 'K'; 
+	vChar2[2] = vchar.at(2);
 	vChar2[3] = 'U';
 	vChar2[5] = 'K';
 	vChar2[7] = 'U';
@@ -418,8 +443,9 @@ int main()
 	//Попробуйте "выйти" за границы вектора с помощью at() и
 	//с помощью []. Обратите внимание: что происходит при
 	//попытке обращения к несуществующему элементу в обоих случаях
-	vChar2[6] = vchar.at(15);
-	vChar2[6] = vchar[15];
+	// vChar2[6] = vchar.at(15); // terminate called after throwing an instance of 'std::out_of_range'
+  	// what():  vector::_M_range_check: __n (which is 15) >= this->size() (which is 3)
+	// vChar2[6] = vchar[15]; // Ошибка не вылазит, UB
   
 	//3г.Добавьте в конец вектора vChar2  - букву Z (push_back()). Для
 	//расширения кругозора можете ее сразу же и выкинуть (pop_back())
@@ -433,27 +459,27 @@ int main()
 	//Очистка последовательности - clear()
 
 	//Вставьте перед каждым элементом вектора vChar2 букву 'W'
-	for(int i = 0; i < vChar2.size(); i++) {
-		vChar2.insert(i, 'W');
+	for(int i = vChar2.size(); i >= 0; i--) {
+		vChar2.insert(vChar2.begin() + i, 'W');
 	}
 	pr(vChar2, "Added W");
 
 	//Вставьте перед 5-ым элементом вектора vChar2 3 буквы 'X'
-	vChar2.insert(5, 3, 'X');
+	vChar2.insert(vChar2.begin() + 5, 3, 'X');
 	pr(vChar2, "Added X");
 
 	//Вставьте перед 2-ым элементом вектора vChar2 с третьего по
 	//шестой элементы массива "aaabbbccc"
 	char ar_vChar2[] = "aaabbbccc";
-	vChar2.insert(2, ar_vChar2 + 2, ar_vChar2 + 5);
+	vChar2.insert(vChar2.begin() + 2, ar_vChar2 + 2, ar_vChar2 + 6);
 	pr(vChar2, "Added ar_vChar2");
   
 	//Сотрите c первого по десятый элементы vChar2
-	vChar2.erace(1, 10);
+	vChar2.erase(vChar2.begin() + 1, vChar2.begin() + 11);
 	pr(vChar2, "Erace method");
 
 	//Уничтожьте все элементы последовательности - clear()
-	vChar2.clear()
+	vChar2.clear();
 	pr(vChar2, "Clear method");
 
 // ///////////////////////////////////////////////////////////////////
@@ -461,92 +487,179 @@ int main()
 // 	//Задание 4. Списки. Операции, характерные для списков.
 // 	//Создайте два пустых списка из элементов Vector - ptList1 и
 // 	//ptList2
-	
+	list<Vector> ptList1;
+	list<Vector> ptList2;
 
 // 	//Наполните оба списка значениями с помощью методов push_back(),
 // 	//push_front, insrert()
 
+	Vector vec1(1, 1);
+	Vector vec2(1, 5);
+	Vector vec3(4, 2);
+	Vector vec4(3, 2);
+	Vector vec5(8, 9);
+	Vector vec6(3, 3);
 
+	ptList1.insert(ptList1.begin(), vec3); 
+    ptList2.insert(ptList2.begin(), vec4);
 
-// 	//Отсортируйте списки - sort().
-// 	//Подсказка: для того, чтобы работала сортировка, в классе Vector
-// 	//должен быть переопределен оператор "<"
+    ptList1.insert(ptList1.begin(), vec1); 
+    ptList2.insert(ptList2.begin(), vec2);
 
-  
-// 	stop;
+    ptList1.push_back(vec5); 
+    ptList2.push_back(vec6);
 
-// 	//Объедините отсортированные списки - merge(). Посмотрите: что
-// 	//при этом происходит со вторым списком.
+	pr(ptList1, "List1 (not sort): ");
+	pr(ptList2, "List2 (not sort): ");
 
+	//Отсортируйте списки - sort().
+	//Подсказка: для того, чтобы работала сортировка, в классе Vector
+	//должен быть переопределен оператор "<"
 
-// 	stop;
+	ptList1.sort();
+	ptList2.sort();
 
-// 	//Исключение элемента из списка - remove()
-// 	//Исключите из списка элемент с определенным значением.
-// 	//Подсказка: для этого необходимо также переопределить
-// 	//в классе Vector оператор "=="
+	pr(ptList1, "List1 (sort): ");
+	pr(ptList2, "List2 (sort): ");
 
+	//Объедините отсортированные списки - merge(). Посмотрите: что
+	//при этом происходит со вторым списком.
 
-// 	stop;
+	ptList1.merge(ptList2);
+	pr(ptList1, "List1 (after merge): ");
+	pr(ptList2, "List2 (after merge): ");
+
+	//Исключение элемента из списка - remove()
+	//Исключите из списка элемент с определенным значением.
+	//Подсказка: для этого необходимо также переопределить
+	//в классе Vector оператор "=="
+	ptList1.remove(vec1);
+	pr(ptList1, "List1 (after remove (1,1)): ");
+
 // */
-// ///////////////////////////////////////////////////////////////////
-// /*
-// 	//Задание 5. Стандартные алгоритмы.Подключите заголовочный файл
-// 	// <algorithm>
-// 	//5а. Выведите на экран элементы ptList1 из предыдущего
-// 	//задания с помощью алгоритма for_each()
+///////////////////////////////////////////////////////////////////
+
+	//Задание 5. Стандартные алгоритмы.Подключите заголовочный файл
+	// <algorithm>
+	//5а. Выведите на экран элементы ptList1 из предыдущего
+	//задания с помощью алгоритма for_each()
+
+	for_each(ptList1.begin(), ptList1.end(), [](const Vector& x) {
+		cout << x << '\n';
+	});
+
+	//5б.С помощью алгоритма find() найдите итератор на элемент Vector с
+	//определенным значением. С помощью алгоритма find_if() найдите
+	//итератор на элемент, удовлетворяющий определенному условию, 
+	//например, обе координаты точки должны быть больше 2.
+	//Подсказка: напишите функцию-предикат, которая проверяет условие
+	//и возвращает boolean-значение (предикат может быть как глобальной
+	//функцией, так и методом класса)
+
+	Vector vec_to_find(1, 5);
+	auto it_find = find(ptList1.begin(), ptList1.end(), vec_to_find);
+
+	if (it_find != ptList1.end()) {
+		cout << "Result: " << *it_find << endl;
+	}
+	else {
+		cout << "No result" << endl;
+	}
 
 
-// 	stop;
+	//Создайте список из указателей на элеметы Vector. С помощью 
+	//алгоритма find_if() и предиката (можно использовать предикат - 
+	//метод класса Vector, определенный в предыдущем задании) найдите в
+	//последовательности элемент, удовлетворяющий условию
 
-// 	//5б.С помощью алгоритма find() найдите итератор на элемент Vector с
-// 	//определенным значением. С помощью алгоритма find_if() найдите
-// 	//итератор на элемент, удовлетворяющий определенному условию, 
-// 	//например, обе координаты точки должны быть больше 2.
-// 	//Подсказка: напишите функцию-предикат, которая проверяет условие
-// 	//и возвращает boolean-значение (предикат может быть как глобальной
-// 	//функцией, так и методом класса)
+	auto it_find_if = find_if(ptList1.begin(), ptList1.end(), [](const Vector& v) {
+		return v.getX() > 2 && v.getY() > 2;
+	});
 
-
-
-// 	  stop;
-
-// 	//Создайте список из указателей на элеметы Vector. С помощью 
-// 	//алгоритма find_if() и предиката (можно использовать предикат - 
-// 	//метод класса Vector, определенный в предыдущем задании) найдите в
-// 	//последовательности элемент, удовлетворяющий условию
-
-  
+	if (it_find_if != ptList1.end()) {
+		cout << "Result (with the condition): " << *it_find << endl;
+	}
+	else {
+		cout << "No result" << endl;
+	}
 	
-// 	  stop;
+	///
 
-// 	//5в. Создайте список элементов Vector. Наполните список
-// 	//значениями. С помощью алгоритма replace() замените элемент
-// 	//с определенным значением новым значением. С помощью алгоритма
-// 	//replace_if() замените элемент, удовлетворяющий какому-либо
-// 	//условию на определенное значение. Подсказка: условие
-// 	//задается предикатом.
+	list<Vector*> ptrList;
+
+	Vector v1(5, 5), v2(-1, -1), v3(3, 4);
+	ptrList.push_back(&v1);
+	ptrList.push_back(&v2);
+	ptrList.push_back(&v3);
+
+	auto it_ptr = find_if(ptrList.begin(), ptrList.end(), [](const Vector* v) {
+		return v->getX() > 0 && v->getY() > 0;
+	});
+
+	if (it_ptr != ptrList.end()) {
+		cout << "Found by index: " << **it_ptr << '\n';
+	}
+
+	//5в. Создайте список элементов Vector. Наполните список
+	//значениями. С помощью алгоритма replace() замените элемент
+	//с определенным значением новым значением. С помощью алгоритма
+	//replace_if() замените элемент, удовлетворяющий какому-либо
+	//условию на определенное значение. Подсказка: условие
+	//задается предикатом.
 
 
-//   //Сформировали значения элементов списка
+ 	list<Vector> repList = { Vector(1, 1), Vector(2, 2), Vector(1, 1), Vector(3, 3) };
+
+	cout << "before replace:\n";
+	for (const auto& v : repList) cout << v << " ";
+	cout << '\n';
+
+	replace(repList.begin(), repList.end(), Vector(1, 1), Vector(9, 9));
+
+	replace_if(repList.begin(), repList.end(), [](const Vector& v) {
+		return v.getX() == 2;
+	}, Vector(8, 8));
+
+	cout << "After replace and replace_if:\n";
+	for (const auto& v : repList) cout << v << " ";
+	cout << '\n';
 
   
-// 	stop;
 
 
-// 	//5г. Создайте вектор строк (string). С помощью алгоритма count()
-// 	//сосчитайте количество одинаковых строк. С помощью алгоритма
-// 	//count_if() сосчитайте количество строк, начинающихся с заданной
-// 	//буквы
+	//5г. Создайте вектор строк (string). С помощью алгоритма count()
+	//сосчитайте количество одинаковых строк. С помощью алгоритма
+	//count_if() сосчитайте количество строк, начинающихся с заданной
+	//буквы
+
+	vector<string> words = { "apple", "apricot", "banana", "apple", "cherry", "avocado" };
+
+	int count_apple = count(words.begin(), words.end(), "apple");
+	cout << "The word 'apple' appears: " << count_apple << "\n";
+
+	int count_a = count_if(words.begin(), words.end(), [](const string& s) {
+		return !s.empty() && s.front() == 'a';
+	});
+	cout << "Words starting with 'a': " << count_a << '\n';
+
+	//5д. С помощью алгоритма count_if() сосчитайте количество строк,
+	//которые совпадают с заданной строкой. Подсказка: смотри тему
+	//объекты-функции
 
 
-// 	//5д. С помощью алгоритма count_if() сосчитайте количество строк,
-// 	//которые совпадают с заданной строкой. Подсказка: смотри тему
-// 	//объекты-функции
+	struct StringMatcher {
+		string target;
+		
+		StringMatcher(string t) : target(t) {}
+		
+		bool operator()(const string& s) const {
+			return s == target;
+		}
+	};
 
+	int count_matcher = count_if(words.begin(), words.end(), StringMatcher("apple"));
 
-// 	stop;
-// */
+	cout << "count_if found it with a functor 'apple': " << count_matcher << "\n";
 
 // 	cout <<"\n\n";
 }

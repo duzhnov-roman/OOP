@@ -33,3 +33,17 @@ Vector& Vector::operator= (const Vector& v)	// Присвоение
 	y = v.y;
 	return *this;
 }
+
+bool Vector::operator<(const Vector& v) const {
+    double first_module_sq = this->getX() * this->getX() + this->getY() * this->getY();
+    double second_module_sq = v.getX() * v.getX() + v.getY() * v.getY();
+    
+    return first_module_sq < second_module_sq;
+}
+
+bool Vector::operator==(const Vector& v) const {
+	if (this->getX() == v.getX() && this->getY() == v.getY()) {
+		return true;
+	}
+	return false;
+}
