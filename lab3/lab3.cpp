@@ -25,7 +25,6 @@ template <typename T>
 void printElem(const T& elem) {
     cout << elem << " ";
 }
-// 2. Функтор для for_each (смещение координат Point на заданные dx, dy)
 struct OffsetPoint {
     int dx, dy;
     OffsetPoint(int dx = 0, int dy = 0) : dx(dx), dy(dy) {}
@@ -34,14 +33,14 @@ struct OffsetPoint {
         p.setY(p.getY() + dy);
     }
 };
-// 3. Глобальные переменные и предикат Pred1_1 для find_if
+
 int g_n = 10;
 int g_m = 50;
 bool Pred1_1(const Point& p) {
     return (p.getX() >= -g_n && p.getX() <= g_m) && 
            (p.getY() >= -g_n && p.getY() <= g_m);
 }
-// 4. Структура прямоугольника Rect
+
 struct Rect {
     double centerX, centerY;
     Rect(double x = 0, double y = 0) : centerX(x), centerY(y) {}
@@ -53,7 +52,7 @@ struct Rect {
         return os;
     }
 };
-// 5. Функция перевода строки в нижний регистр для transform
+
 string toLowerStr(string str) {
     transform(str.begin(), str.end(), str.begin(), ::tolower);
     return str;
@@ -194,20 +193,20 @@ int main()
 	//д) проверьте, какой из стеков больше (подумайте, какой смысл вкладывается в такое сравнение)
 	{
 		// а) Создаем первый стек
-		std::stack<int> s1;
+		stack<int> s1;
 		s1.push(10);
 		s1.push(20);
 		s1.push(30);
 
 		// б) Копируем первый стек во второй через конструктор копирования
-		std::stack<int> s2 = s1;
+		stack<int> s2 = s1;
 
 		// в) Сравниваем на равенство
 		cout << "\ns1 == s2: " << boolalpha << (s1 == s2) << "\n"; // true
 
 		// г) Модифицируем второй стек
-		s2.pop();        // удалили верхний (30)
-		s2.push(50);     // добавили вместо него 50
+		s2.pop();
+		s2.push(50);
 
 		// д) Проверяем, какой стек больше
 		cout << "s1 < s2: " << (s1 < s2) << "\n";
@@ -224,22 +223,19 @@ int main()
 	//Подумайте, что требуется сделать при уничтожении такой очереди?
 	{
 
-		std::queue<Point*, std::deque<Point*>> q;
+		queue<Point*, deque<Point*>> q;
 		q.push(new Point(10, 20));
 		q.push(new Point(30, 40));
 		q.push(new Point(50, 60));
 
-		// Изменяем значения первого и последнего элементов через front() и back()
-		q.front()->setX(99);   // первый элемент: точка (10, 20) -> x стал 99
-		q.back()->setY(88);    // последний элемент: точка (50, 60) -> y стал 88
+		q.front()->setX(99);
+		q.back()->setY(88);
 		cout << "\nQueue front: " << *q.front() << ", back: " << *q.back() << "\n";
 
-		// Что требуется сделать при уничтожении очереди:
-		// 		Обязательно освободить динамическую память, иначе произойдет утечка памяти
-		// 		Контейнеры STL автоматически НЕ вызывают delete для «сырых» указателей.
+		// при уничтожении очереди нужно: 1) освободить дин память 2) удалить указатель
 		while (!q.empty()) {
-			delete q.front(); // Освобождаем память под объектом Point
-			q.pop();          // Удаляем сам указатель из очереди
+			delete q.front();
+			q.pop();
     }
 
 
@@ -264,13 +260,13 @@ int main()
 			cout << pq.top() << " ";
 			pq.pop();
 		}
-		cout << "\n"; // ?? ниже
-		// ПОЧЕМУ ОНИ НЕ УПОРЯДОЧЕНЫ ПО АЛФАВИТУ:
-		// По умолчанию сравниваются АДРЕСА указателей в памяти (числа), а не содержимое строк!
-		// Чтобы упорядочить именно по алфавиту, нужен компаратор с strcmp:
+		cout << "\n";
+		// по умолчанию сравниваются адреса указателей в памяти
+		// для сравнения по алфавиту нужен компоратор с strcmp
+
 		struct CmpStr {
 			bool operator()(const char* a, const char* b) const {
-				return strcmp(a, b) < 0; // лексикографическое сравнение строк
+				return strcmp(a, b) < 0;
 			}
 		};
 		priority_queue<const char*, vector<const char*>, CmpStr> pq_alphabet(arr, arr + 4);
@@ -295,7 +291,7 @@ int main()
 	//д) Вставьте в любое множество диапазон элементов из любого другого
 	//	контейнера, например, элементов массива	(что происходит, если в массиве имеются дубли?)
 
-		// а) В классе Point ОБЯЗАТЕЛЬНО должен быть перегружен operator< (строгий слабый порядок),
+		// В классе должен быть перегружен operator<,
 		// так как std::set построен на основе бинарного дерева поиска (красно-черного дерева).
 	{
 		set<Point> pointSet;
@@ -304,40 +300,38 @@ int main()
 		pointSet.insert(Point(3, 4));
 		pointSet.insert(Point(1, 2)); // дубликат автоматически отбросится
 
-		// б) Распечатка значений (элементы отсортируются автоматически)
 		cout << "\nSet of Points:\n";
-		for (const auto& p : pointSet) cout << p << " ";
-		cout << "\n";
+		pr(pointSet, "Set (PointSet): ");
+		// for (const auto& p : pointSet) cout << p << " ";
+		// cout << "\n";
 
-		// в) Попробуем изменить значение:
 		auto it = pointSet.begin();
-		// *it = Point(10, 10);  // ОШИБКА: элементы в set имеют квалификатор const!
-		// Прямое изменение элемента сломало бы порядок в бинарном дереве.
+		// *it = Point(10, 10);
+		// ошибка - тк.итератор конст - прямое изменение элемента сломало бы порядок в бинарном дереве
 
-		// Сначала удаляем старый элемент, затем вставляем измененный:
+		// сначала удаляем старый элемент, затем вставляем измененный
 		Point modifiedPoint = *it;
 		modifiedPoint.setX(10);
 		pointSet.erase(it);
 		pointSet.insert(modifiedPoint);
 
-		// г) Два множества с одинаковыми int, но занесенными в разном порядке:
+		// г)
 		set<int> s1 = { 9, 1, 5, 3 };
 		set<int> s2 = { 1, 3, 5, 9 };
 		cout << "s1 == s2: " << boolalpha << (s1 == s2) << "\n"; // true (порядок вставки не важен)
 
-		// д) Вставка диапазона из массива:
+		// д) 
 		int arr[] = { 4, 1, 4, 2, 1, 3, 2 };
 		set<int> sFromArr;
 		sFromArr.insert(arr, arr + 7);
-		cout << "sFromArr (duplicates discarded): ";
-		for (int val : sFromArr) cout << val << " "; // 1 2 3 4
+		cout << "sFromArr: ";
+		for (int val : sFromArr) cout << val << " ";
 		cout << "\n";
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////
 	//multiset
 	{
-		// В отличие от set, multiset разрешает хранить одинаковые элементы (дубликаты)
 		int arr[] = { 4, 1, 4, 2, 1, 4 };
 
 		multiset<int> ms(arr, arr + 6);
@@ -345,9 +339,9 @@ int main()
 		for (int val : ms) cout << val << " "; // 1 1 2 4 4 4
 			cout << "\nNumber of fours: " << ms.count(4) << "\n";
 
-		// Демонстрация удаления:
-		// ms.erase(4);          // удалит ВСЕ четверки
-		ms.erase(ms.find(4));    // удалит ТОЛЬКО ОДНУ четверку
+		// удаления:
+		// ms.erase(4); - удалит все четверки
+		ms.erase(ms.find(4)); // удалит одну четверку (по итератору когда)
 		cout << "After removing one quad: ";
 
 		for (int val : ms) cout << val << " ";
@@ -372,19 +366,16 @@ int main()
 			}
 		};
 
-		// а) Создание map
 		map<const char*, int, CmpStr> salary;
 
-		// б) Заполнение через operator[] и insert()
 		salary["Ivanova"] = 50000;
 		salary["Sidorova"] = 75000;
-		salary.insert(pair<const char*, int>("Петров", 60000));
-		salary.insert(make_pair("Кузнецов", 90000));
+		salary.insert(pair<const char*, int>("Petrov", 60000));
+		salary.insert(make_pair("Kuznetsov", 90000));
 
-		// в) Печать содержимого
-		cout << "\nEmployee salariesв:\n";
+		cout << "\nEmployee salaries:\n";
 		for (const auto& item : salary) {
-			cout << item.first << " : " << item.second << " руб.\n";
+			cout << item.first << " : " << item.second << " rub.\n";
 		}
 	}
 
@@ -401,11 +392,8 @@ int main()
 
 
 	{
-		// а) Создаем англо-русский словарь
-		// (У multimap НЕТ operator[], вставка производится только через insert)
 		multimap<string, string> dict;
 
-		// б) Заполнение через insert и make_pair
 		dict.insert(make_pair("strange", "странный"));
 		dict.insert(make_pair("strange", "чужой"));
 		dict.insert(make_pair("strange", "незнакомый"));
@@ -413,13 +401,11 @@ int main()
 		dict.insert(make_pair("run", "управлять"));
 		dict.insert(make_pair("apple", "яблоко"));
 
-		// в) Вывод всего словаря на экран
-		cout << "\nПолный англо-русский словарь:\n";
+		cout << "\nDict:\n";
 		for (const auto& item : dict) {
 			cout << item.first << " -> " << item.second << "\n";
 		}
 
-		// г) Поиск переводов для заданного ключа через lower_bound и upper_bound:
 		string key = "strange";
 		auto itLow = dict.lower_bound(key); // итератор на первый элемент с ключом "strange"
 		auto itUp  = dict.upper_bound(key); // итератор за последний элемент с ключом "strange"
@@ -438,17 +424,16 @@ int main()
 	//нужно перегрузить в классе Point. Создайте вектор, элементы которого 
 	//являются копиями элементов set, но упорядочены по убыванию
 	{
-		// В классе Point для set по-прежнему необходим operator<.
+		// В классе для set по-прежнему необходим operator<
 		set<Point> pointSet = { Point(1, 1), Point(5, 5), Point(2, 3), Point(4, 2) };
-		// В set элементы всегда упорядочены по возрастанию.
-		// Чтобы в векторе они оказались по убыванию, инициализируем его 
-		// реверсивными итераторами: от rbegin() до rend():
+		// в set элементы всегда упорядочены по возрастанию =>
+		// инициализируем вектор реверсивными итераторами: от rbegin() до rend():
 		vector<Point> vecDesc(pointSet.rbegin(), pointSet.rend());
+
 		cout << "\nSet (по возрастанию):\n";
-		
 		for (const auto& p : pointSet) cout << p << " ";
-			cout << "\nVector (по убыванию через реверсивные итераторы):\n";
-		
+			
+		cout << "\nVector:\n";	
 		for (const auto& p : vecDesc) cout << p << " ";
 			cout << "\n";
 	}
@@ -458,15 +443,13 @@ int main()
 		set<Point> pointSet = { Point(10, 20), Point(30, 40), Point(50, 60) };
 		vector<Point> vecDesc(pointSet.rbegin(), pointSet.rend());
 		
-		// ostream_iterator связывает поток cout с алгоритмом copy.
-		// Вторым аргументом передается строка-разделитель (например, пробел или переход на новую строку).
-		// ВАЖНО: для типа Point обязательно должен быть перегружен operator<< !
+		// для типа Point обязательно должен быть перегружен operator<< 
 		
-		cout << "\nВывод set через ostream_iterator:\n";
+		cout << "\nOutput set via ostream_iterator:\n";
 		copy(pointSet.begin(), pointSet.end(), ostream_iterator<Point>(cout, " "));
 		cout << "\n";
 		
-		cout << "Вывод vector через ostream_iterator:\n";
+		cout << "Vector output via ostream_iterator:\n";
 		copy(vecDesc.begin(), vecDesc.end(), ostream_iterator<Point>(cout, " "));
 		cout << "\n";
 	}
@@ -479,35 +462,34 @@ int main()
 	{
 		vector<int> src = { 10, 20, 30 };
 		
-		// 1. back_inserter() — внутри вызывает c.push_back(val)
+		// back_inserter() - внутри вызывает push_back(val)
 		// Используется с: vector, deque, list
 		vector<int> vDest;
 		
 		copy(src.begin(), src.end(), back_inserter(vDest));
-		cout << "\nПосле back_inserter в vector: ";
+		cout << "\nAfter back_inserter in vector: ";
 		
-		for (int x : vDest) cout << x << " "; // 10 20 30
+		for (int x : vDest) cout << x << " ";
 			cout << "\n";
 		
-		// 2. front_inserter() — внутри вызывает c.push_front(val)
-		// Используется с: deque, list (у vector НЕТ метода push_front, с ним не работает!)
-		// Внимание: при вставке в начало порядок элементов разворачивается!
-		deque<int> dDest;
+		// front_inserter() - внутри вызывает push_front(val)
+		// Используется с: deque, list
+		deque<int> dDest; // порядок элементов разворачивается
 		
 		copy(src.begin(), src.end(), front_inserter(dDest));
-		cout << "После front_inserter в deque: ";
+		cout << "After front_inserter in deque: ";
 		
-		for (int x : dDest) cout << x << " "; // 30 20 10
+		for (int x : dDest) cout << x << " ";
 			cout << "\n";
 		
-		// 3. inserter() — внутри вызывает c.insert(it, val)
-		// Используется с: ЛЮБЫМИ стандартными контейнерами (vector, deque, list, set, map).
+		// inserter() - внутри вызывает insert(it, val)
+		// Используется с: любыми стандартными контейнерами
 		set<int> sDest = { 1, 100 };
 		
 		copy(src.begin(), src.end(), inserter(sDest, sDest.begin()));
-		cout << "После inserter в set: ";
+		cout << "After inserter in set: ";
 		
-		for (int x : sDest) cout << x << " "; // 1 10 20 30 100
+		for (int x : sDest) cout << x << " ";
 			cout << "\n";
 
 
@@ -523,7 +505,7 @@ int main()
 	//Подсказка : неплохо вызываемую функцию определить как шаблон
 	{
 		vector<int> vInt = { 1, 2, 3, 4, 5 };
-		cout << "\nfor_each для vector<int>: ";
+		cout << "\nfor_each for vector<int>: ";
 		
 		for_each(vInt.begin(), vInt.end(), printElem<int>);
 			cout << "\n";
@@ -534,13 +516,12 @@ int main()
 	//как шаблон) и выведите результат с помощью предыдущего предиката
 	{
 		vector<Point> vp = { Point(1, 2), Point(3, 4), Point(5, 6) };
-		cout << "\nPoint до смещения: ";
+		cout << "\nPoint before displacement: ";
 		for_each(vp.begin(), vp.end(), printElem<Point>);
 		cout << "\n";
-		// Смещаем координаты на (+10, +20)
 		
 		for_each(vp.begin(), vp.end(), OffsetPoint(10, 20));
-			cout << "Point после смещения: ";
+			cout << "Point after displacement: ";
 		for_each(vp.begin(), vp.end(), printElem<Point>);
 			cout << "\n";
 	}
@@ -552,12 +533,12 @@ int main()
 		Point target(5, 5);
 		vector<vector<Point>::iterator> foundIterators;
 		auto it = vp.begin();
-		// find находит первое вхождение, поэтому для поиска ВСЕХ вхождений запускаем цикл:
+		// find находит первое вхождение
 		while ((it = find(it, vp.end(), target)) != vp.end()) {
 			foundIterators.push_back(it);
 			++it; // сдвигаемся вперед, чтобы искать дальше
 		}
-		cout << "\nНайдено совпадений с " << target << ": " << foundIterators.size() << "\n";
+		cout << "\nFound matches with" << target << ": " << foundIterators.size() << "\n";
 	}
 
 	//С помощью алгоритма sort() отсортируйте любую последовательность элементов Point. 
@@ -566,18 +547,16 @@ int main()
 	// Замечание: обобщенный алгоритм sort не работает со списком, так как
 	//это было бы не эффективно => для списка сортировка реализована методом класса!!!
 	{
-		// В классе Point ОБЯЗАТЕЛЬНО должен быть перегружен operator<
+		//должен быть перегружен operator<
 		vector<Point> vp = { Point(7, 2), Point(1, 5), Point(3, 3) };
 		sort(vp.begin(), vp.end());
-		cout << "\nОтсортированный vector<Point>: ";
+		cout << "\nSorted vector<Point>: ";
 		
 		for_each(vp.begin(), vp.end(), printElem<Point>);
 			cout << "\n";
 		
-			// Демонстрация для списка:
-		list<Point> lp = { Point(7, 2), Point(1, 5), Point(3, 3) };
-		// sort(lp.begin(), lp.end()); // ОШИБКА! У списка нет RandomAccessIterator
-		lp.sort(); // ПРАВИЛЬНО: сортировка методом самого класса list
+		// list<Point> lp = { Point(7, 2), Point(1, 5), Point(3, 3) };
+		// lp.sort();
 	}
 	
 	//Создайте глобальную функцию вида: bool Pred1_1(const Point& ), которая будет вызываться
@@ -590,9 +569,9 @@ int main()
 		vector<Point> vp = { Point(-20, 100), Point(15, 25), Point(70, 80) };
 		auto it = find_if(vp.begin(), vp.end(), Pred1_1);
 		if (it != vp.end()) {
-			cout << "\nfind_if нашел точку в диапазоне [-" << g_n << ", +" << g_m << "]: " << *it << "\n";
+			cout << "\nfind_if found a point in the range [-" << g_n << ", +" << g_m << "]: " << *it << "\n";
 		} else {
-			cout << "\nfind_if: точка не найдена\n";
+			cout << "\nfind_if: point not found\n";
 		}
 	}
 
@@ -617,16 +596,15 @@ int main()
 		// определены методы begin() и end()
 		string s = "Hello, WORLD!";
 		string lowerS = toLowerStr(s);
-		cout << "\nИсходная строка: " << s << " -> в нижнем регистре: " << lowerS << "\n";
+		cout << "\nSource string: " << s << " -> lowercase: " << lowerS << "\n";
 		
 		//Заполните list объектами string. С помощью алгоритма transform сформируте
 		//значения "пустого" set, конвертируя строки в нижний регистр
 		list<string> strList = { "APPLE", "BANANA", "ORANGE", "apple" };
 		set<string> lowerSet;
 		
-		// Используем inserter для вставки в пустой set и toLowerStr для конвертации:
 		transform(strList.begin(), strList.end(), inserter(lowerSet, lowerSet.begin()), toLowerStr);
-		cout << "Результирующий set (в нижнем регистре и без дублей): ";
+		cout << "The resulting set (lowercase and without duplicates)): ";
 		for (const auto& str : lowerSet) cout << str << " ";
 			cout << "\n";
 	}
@@ -640,9 +618,9 @@ int main()
 		for (const auto& w : words) {
 			wordCount[w]++; // если слово встречается впервые, создается значение 0 и увеличивается до 1
 		}
-		cout << "\nЧастотный словарь слов:\n";
+		cout << "\nFrequency dictionary of words:\n";
 		for (const auto& pair : wordCount) {
-			cout << "  " << pair.first << " : " << pair.second << " раз(а)\n";
+			cout << "  " << pair.first << " : " << pair.second << " times)\n";
 		}
 	}
 	return 0;
