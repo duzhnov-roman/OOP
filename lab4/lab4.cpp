@@ -160,8 +160,8 @@ void printAdapter(C c, const string& name)
 
 
 template <typename T, typename K>
-concept Summable = std::convertible_to<K, T> && requires(T a, K b) {
-    { a + b } -> std::convertible_to<T>;
+concept Summable = convertible_to<K, T> && requires(T a, K b) {
+    { a + b } -> convertible_to<T>;
 };
 
 template <typename T, typename K> requires Summable<T, K>
@@ -171,7 +171,7 @@ T sumTwo(T a, K b)
 }
 
 template <integral T>
-constexpr T maxFactorialN() // TODO
+constexpr T maxFactorialN()
 {
     T result = 1;
     T n = 1;
@@ -183,9 +183,9 @@ constexpr T maxFactorialN() // TODO
 }
 
 template <integral T>
-T factorial(T n)
+consteval T factorial(T n)
 {
-    if (n < 0 || n > maxFactorialN<T>()) { // TODO
+    if (n < 0 || n > maxFactorialN<T>()) {
         cout << "Error: n must be in [0, " << maxFactorialN<T>() << "]\n";
         return 0;
     }
@@ -291,37 +291,34 @@ void reducePrices(span<Product> products, double amount)
 }
 
 
-//========================================================================================
 // РАЗДЕЛ 7: Coroutines
-//========================================================================================
 
 class Generator {
 public:
     struct promise_type {
-        int current = 0;   // последнее выданное число
+        int current = 0;
 
         Generator get_return_object()
         {
-            return Generator(std::coroutine_handle<promise_type>::from_promise(*this));
+            return Generator(coroutine_handle<promise_type>::from_promise(*this));
         }
         // Корутина не стартует сама, а ждёт первого next()
-        std::suspend_always initial_suspend() { return {}; }
+        suspend_always initial_suspend() { return {}; }
         // После завершения корутина остаётся приостановленной до destroy()
-        std::suspend_always final_suspend() noexcept { return {}; }
+        suspend_always final_suspend() noexcept { return {}; }
         // co_yield v: запоминаем число и засыпаем
-        std::suspend_always yield_value(int v)
+        suspend_always yield_value(int v)
         {
             current = v;
             return {};
         }
         void return_void() {}
-        void unhandled_exception() { std::terminate(); }
+        void unhandled_exception() { terminate(); }
     };
 
-    explicit Generator(std::coroutine_handle<promise_type> h) : handle(h) {}
+    explicit Generator(coroutine_handle<promise_type> h) : handle(h) {}
 
-    // Копировать нельзя (иначе destroy() вызовется дважды), перемещать можно
-    Generator(const Generator&) = delete;
+    Generator(const Generator&) = delete; // дестрой вызовется дважды
     Generator& operator=(const Generator&) = delete;
     Generator(Generator&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
     Generator& operator=(Generator&&) = delete;
@@ -342,12 +339,12 @@ public:
     int value() const { return handle.promise().current; }
 
 private:
-    std::coroutine_handle<promise_type> handle;
+    coroutine_handle<promise_type> handle;
 };
 
 Generator count_to(int limit)
 {
-    for (int i = 1; i <= limit; i++)   // при limit < 1 цикл не выполнится ни разу
+    for (int i = 1; i <= limit; i++)
         co_yield i;
 }
 
@@ -372,14 +369,14 @@ void handle_status(Status s)
 }
 
 // Поток генерирует случайные числа, пока не попросят остановиться
-void generateNumbers(std::stop_token token, int minValue, int maxValue)
+void generateNumbers(stop_token token, int minValue, int maxValue)
 {
-    std::mt19937 gen(std::random_device{}());
-    std::uniform_int_distribution<int> dist(minValue, maxValue);
+    mt19937 gen(random_device{}());
+    uniform_int_distribution<int> dist(minValue, maxValue);
 
     while (!token.stop_requested()) {
-        std::cout << dist(gen) << " " << std::flush;
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        cout << dist(gen) << " " << flush;
+        this_thread::sleep_for(chrono::milliseconds(200));
     }
     std::cout << "\nThread stopped\n";
 }
@@ -401,15 +398,14 @@ vector<int> getNumbers()
 
 // РАЗДЕЛ 11: std::optional
 
-// Поэлементное деление a[i] / b[i]. При ошибке - std::nullopt
 template <typename C1, typename C2>
-std::optional<std::vector<int>> divideContainers(const C1& a, const C2& b)
+optional<vector<int>> divideContainers(const C1& a, const C2& b)
 {
-    if (a.size() != b.size()) return std::nullopt;
+    if (a.size() != b.size()) return nullopt;
 
-    std::vector<int> result;
-    for (std::size_t i = 0; i < a.size(); i++) {
-        if (b[i] == 0) return std::nullopt;
+    vector<int> result;
+    for (size_t i = 0; i < a.size(); i++) {
+        if (b[i] == 0) return nullopt;
         result.push_back(a[i] / b[i]);
     }
     return result;
@@ -419,23 +415,22 @@ std::optional<std::vector<int>> divideContainers(const C1& a, const C2& b)
 template <typename C1, typename C2>
 void divideAndPrint(const C1& a, const C2& b)
 {
-    auto result = divideContainers(a, b).or_else([&]() -> std::optional<std::vector<int>> {
-        std::cout << "Division failed at indices: ";
-        std::size_t maxSize = std::max(a.size(), b.size());
-        for (std::size_t i = 0; i < maxSize; i++) {
-            // индекс есть только в одном контейнере, либо делитель равен 0
+    auto result = divideContainers(a, b).or_else([&]() -> optional<vector<int>> {
+        cout << "Division failed at indices: ";
+        size_t maxSize = max(a.size(), b.size());
+        for (size_t i = 0; i < maxSize; i++) {
             if (i >= a.size() || i >= b.size() || b[i] == 0)
-                std::cout << i << " ";
+                cout << i << " ";
         }
-        std::cout << '\n';
-        return std::nullopt;
+        cout << '\n';
+        return nullopt;
     });
 
     if (result) {
-        std::cout << "Result: ";
+        cout << "Result: ";
         for (int x : *result)
-            std::cout << x << " ";
-        std::cout << '\n';
+            cout << x << " ";
+        cout << '\n';
     }
 }
 
@@ -496,8 +491,8 @@ int main()
         cout << "factorial(5) = " << factorial(5) << '\n';
         cout << "factorial(12) = " << factorial(12) << '\n';
         cout << "factorial(20LL) = " << factorial(20LL) << '\n';
-        cout << "factorial(13): ";
-        factorial(13);
+        // cout << "factorial(13): ";
+        // factorial(13);
         // factorial(5.0);
     }
 
@@ -788,17 +783,17 @@ int main()
     {
         title("7.1 Generator");
         Generator gen = count_to(5);
-        std::cout << "count_to(5): ";
+        cout << "count_to(5): ";
         while (gen.next())
-            std::cout << gen.value() << " ";
-        std::cout << '\n';
-        std::cout << "next() after end: " << gen.next() << '\n';
+            cout << gen.value() << " ";
+        cout << '\n';
+        cout << "next() after end: " << gen.next() << '\n';
 
         Generator empty = count_to(0);
-        std::cout << "count_to(0): ";
+        cout << "count_to(0): ";
         while (empty.next())
-            std::cout << empty.value() << " ";
-        std::cout << "(nothing)\n";
+            cout << empty.value() << " ";
+        cout << "(nothing)\n";
     }
 
 
@@ -819,7 +814,7 @@ int main()
             return result;
         };
 
-        std::array<int, 5> ints = {1, 2, 3, 4, 5};
+        array<int, 5> ints = {1, 2, 3, 4, 5};
 
         auto halves = transform_array(ints, [](int x) { return x / 2.0; });
         auto texts = transform_array(ints, [](int x) { return "#" + to_string(x); });
@@ -882,17 +877,15 @@ int main()
     {
         title("9.2 jthread");
         int minValue, maxValue;
-        std::cout << "Enter min and max: ";
-        std::cin >> minValue >> maxValue;
+        cout << "Enter min and max: ";
+        cin >> minValue >> maxValue;
         if (minValue > maxValue)
-            std::swap(minValue, maxValue);
+            swap(minValue, maxValue);
 
-        // jthread сам передаёт std::stop_token первым аргументом в generateNumbers
-        std::jthread worker(generateNumbers, minValue, maxValue);
+        jthread worker(generateNumbers, minValue, maxValue);
 
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        worker.request_stop();   // явный запрос остановки
-        worker.join();
+        this_thread::sleep_for(std::chrono::seconds(3));
+        worker.request_stop();
     }
 
 
