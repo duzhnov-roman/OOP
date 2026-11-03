@@ -1,0 +1,5 @@
+C:/Users/roman/Desktop/OOP/lab5/build/CMakeFiles/HelloWorldApp.dir
+C:/Users/roman/Desktop/OOP/lab5/build/CMakeFiles/edit_cache.dir
+C:/Users/roman/Desktop/OOP/lab5/build/CMakeFiles/rebuild_cache.dir
+C:/Users/roman/Desktop/OOP/lab5/build/CMakeFiles/HelloWorldApp_autogen_timestamp_deps.dir
+C:/Users/roman/Desktop/OOP/lab5/build/CMakeFiles/HelloWorldApp_autogen.dir
