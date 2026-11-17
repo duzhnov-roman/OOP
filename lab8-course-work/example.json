@@ -1,0 +1,29 @@
+{
+    "version": 1,
+    "contacts": [
+        {
+            "firstName": "Иван",
+            "lastName": "Петров",
+            "patronymic": "Сергеевич",
+            "address": "Санкт-Петербург, ул. Мира, д. 10, кв. 2",
+            "birthDate": "29.02.2000",
+            "email": "Ivan123@example.com",
+            "phones": [
+                {"type": "Рабочий", "number": "78121234567"},
+                {"type": "Рабочий", "number": "78001231212"},
+                {"type": "Домашний", "number": "380321231111"}
+            ]
+        },
+        {
+            "firstName": "Анна-Мария",
+            "lastName": "Смирнова",
+            "patronymic": "Андреевна",
+            "address": "Москва, ул. Лесная, д. 5",
+            "birthDate": "15.07.1995",
+            "email": "Anna95@example.org",
+            "phones": [
+                {"type": "Служебный", "number": "442012345678"}
+            ]
+        }
+    ]
+}
