@@ -45,7 +45,8 @@ ContactDialog::ContactDialog(const Contact &contact, QWidget *parent) : QDialog(
     const QString nameHint = QStringLiteral("Начните с заглавной буквы. Разрешены буквы разных "
                                            "алфавитов, цифры, пробелы и дефис внутри строки.");
     firstNameEdit->setToolTip(nameHint);
-    lastNameEdit->setToolTip(nameHint);
+    lastNameEdit->setToolTip(QStringLiteral("Каждая часть фамилии начинается с заглавной буквы, "
+                                            "остальные буквы строчные. Пример: Петров-Пупкин."));
     patronymicEdit->setToolTip(nameHint);
     emailEdit->setPlaceholderText(QStringLiteral("Ivan123@example.com"));
     emailEdit->setToolTip(QStringLiteral("Имя пользователя: латинские буквы и цифры. "

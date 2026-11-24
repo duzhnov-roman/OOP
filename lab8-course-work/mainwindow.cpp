@@ -1,6 +1,12 @@
 #include "mainwindow.h"
 #include "contactdialog.h"
 #include "contactstore.h"
+#include "validation.h"
+
+#include <QCalendarWidget>
+#include <QHelpEvent>
+#include <QScreen>
+#include <QGuiApplication>
 
 #include <QAbstractItemModel>
 #include <QAction>
@@ -24,6 +30,57 @@
 #include <QVBoxLayout>
 
 namespace {
+
+class ContactTable : public QTableWidget {
+public:
+    explicit ContactTable(QWidget *parent = nullptr) : QTableWidget(0, 9, parent) {
+        calendar = new QCalendarWidget(this);
+        calendar->setWindowFlags(Qt::ToolTip);
+        calendar->setAttribute(Qt::WA_ShowWithoutActivating);
+        calendar->setAttribute(Qt::WA_TransparentForMouseEvents);
+        calendar->setFocusPolicy(Qt::NoFocus);
+        calendar->setNavigationBarVisible(true);
+        calendar->hide();
+    }
+
+protected:
+    bool viewportEvent(QEvent *event) override {
+        if (event->type() == QEvent::ToolTip) {
+            auto *help = static_cast<QHelpEvent *>(event);
+            const auto *cell = itemAt(help->pos());
+            if (cell && cell->column() == 4) {
+                const QDate date = cell->data(Qt::UserRole + 1).toDate();
+                if (date.isValid()) {
+                    calendar->setSelectedDate(date);
+                    calendar->showSelectedDate();
+                    calendar->adjustSize();
+                    QPoint position = viewport()->mapToGlobal(visualItemRect(cell).bottomLeft());
+                    if (auto *screen = QGuiApplication::screenAt(position)) {
+                        const QRect area = screen->availableGeometry();
+                        position.setX(qBound(area.left(), position.x(),
+                                             qMax(area.left(), area.right() - calendar->width() + 1)));
+                        if (position.y() + calendar->height() > area.bottom())
+                            position.setY(qMax(area.top(), viewport()->mapToGlobal(
+                                visualItemRect(cell).topLeft()).y() - calendar->height()));
+                    }
+                    calendar->move(position);
+                    calendar->show();
+                    event->accept();
+                    return true;
+                }
+            }
+            calendar->hide();
+        } else if (event->type() == QEvent::MouseMove || event->type() == QEvent::Leave ||
+                   event->type() == QEvent::MouseButtonPress || event->type() == QEvent::Wheel ||
+                   event->type() == QEvent::Hide) {
+            calendar->hide();
+        }
+        return QTableWidget::viewportEvent(event);
+    }
+
+private:
+    QCalendarWidget *calendar;
+};
 
 class TextItem : public QTableWidgetItem {
 public:
@@ -109,7 +166,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     buttons->addStretch();
     layout->addLayout(buttons);
 
-    table = new QTableWidget(0, 9);
+    table = new ContactTable;
     table->setHorizontalHeaderLabels({QStringLiteral("Фамилия"), QStringLiteral("Имя"),
         QStringLiteral("Отчество"), QStringLiteral("Адрес"), QStringLiteral("Дата рождения"),
         QStringLiteral("E-mail"), QStringLiteral("Рабочие телефоны"),
@@ -177,7 +234,8 @@ void MainWindow::refreshTable(int selectedIndex) {
             QTableWidgetItem *item = column == 4
                 ? static_cast<QTableWidgetItem *>(new DateItem(contact.birthDate))
                 : new TextItem(text[column]);
-            item->setToolTip(item->text());
+            if (column != 4)
+                item->setToolTip(item->text());
             if (column == 0)
                 item->setData(Qt::UserRole, row);
             table->setItem(row, column, item);
@@ -208,13 +266,6 @@ void MainWindow::applyFilters() {
     email.remove(QRegularExpression(QStringLiteral(R"(\s+)"),
                                     QRegularExpression::UseUnicodePropertiesOption));
     const QString phoneQuery = phoneSearch->text().trimmed();
-    QString digits = phoneQuery;
-    digits.remove(QRegularExpression(QStringLiteral("[^0-9]")));
-    if (phoneQuery.startsWith(QStringLiteral("00")))
-        digits.remove(0, 2);
-    else if (!phoneQuery.startsWith('+') && digits.size() == 11 && digits.startsWith('8'))
-        digits[0] = QChar('7');
-
     int visible = 0;
     for (int row = 0; row < table->rowCount(); ++row) {
         const int index = table->item(row, 0)->data(Qt::UserRole).toInt();
@@ -225,12 +276,7 @@ void MainWindow::applyFilters() {
             matches = matches && fullName.contains(part, Qt::CaseInsensitive);
         matches = matches && contact.address.contains(address, Qt::CaseInsensitive)
                           && contact.email.contains(email, Qt::CaseInsensitive);
-        bool phoneMatches = phoneQuery.isEmpty();
-        if (!digits.isEmpty()) {
-            for (const PhoneNumber &phone : contact.phones)
-                phoneMatches = phoneMatches || phone.digits.contains(digits);
-        }
-        matches = matches && phoneMatches;
+        matches = matches && Validation::matchesPhoneQuery(contact.phones, phoneQuery);
         table->setRowHidden(row, !matches);
         if (matches)
             ++visible;

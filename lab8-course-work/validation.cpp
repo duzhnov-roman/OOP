@@ -12,6 +12,36 @@ bool normalizeName(QString &value) {
     return pattern.match(value).hasMatch();
 }
 
+bool normalizeSurname(QString &value) {
+    value = value.simplified().normalized(QString::NormalizationForm_C);
+    static const QRegularExpression pattern(
+        QStringLiteral(R"(\A\p{Lu}\p{Ll}*(?:[ -]\p{Lu}\p{Ll}*)*\z)"));
+    return pattern.match(value).hasMatch();
+}
+
+bool matchesPhoneQuery(const QVector<PhoneNumber> &phones, const QString &input) {
+    const QString query = input.simplified();
+    if (query.isEmpty())
+        return true;
+    static const QRegularExpression format(QStringLiteral(
+        R"(\A\+?[0-9 ()-]*\z)"));
+    if (!format.match(query).hasMatch())
+        return false;
+    QString digits = query;
+    digits.remove(QRegularExpression(QStringLiteral("[^0-9]")));
+    if (query.startsWith(QStringLiteral("00")))
+        digits.remove(0, 2);
+    else if (!query.startsWith('+') && digits.size() == 11 && digits.startsWith('8'))
+        digits[0] = QChar('7');
+    if (digits.isEmpty())
+        return false;
+    for (const PhoneNumber &phone : phones) {
+        if (phone.digits.contains(digits))
+            return true;
+    }
+    return false;
+}
+
 bool normalizeAddress(QString &value) {
     value = value.trimmed();
     static const QRegularExpression pattern(QStringLiteral(
@@ -80,9 +110,9 @@ bool normalizeContact(Contact &contact, QString &error) {
     Contact checked = contact;
     error.clear();
 
-    if (!normalizeName(checked.lastName))
-        error = QStringLiteral("Фамилия должна начинаться с заглавной буквы. Разрешены буквы, "
-                               "цифры, пробелы и дефис; дефис в конце запрещён.");
+    if (!normalizeSurname(checked.lastName))
+        error = QStringLiteral("Каждая часть фамилии должна начинаться с заглавной буквы, "
+                               "остальные буквы — строчные. Разделители — пробел или дефис.");
     else if (!normalizeName(checked.firstName))
         error = QStringLiteral("Некорректное имя: нужна заглавная первая буква, "
                                "допустимы буквы, цифры, пробелы и дефис внутри.");
