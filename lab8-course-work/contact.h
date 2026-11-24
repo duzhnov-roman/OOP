@@ -7,7 +7,7 @@
 
 struct PhoneNumber {
     QString type;
-    QString digits; // Только цифры, включая код страны, без плюса и разделителей.
+    QString digits;
 };
 
 struct Contact {

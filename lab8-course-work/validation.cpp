@@ -14,8 +14,6 @@ bool normalizeName(QString &value) {
 
 bool normalizeAddress(QString &value) {
     value = value.trimmed();
-    // В адресе разрешены печатные символы, но нужна хотя бы буква или цифра.
-    // Управляющие символы и переносы строк запрещены.
     static const QRegularExpression pattern(QStringLiteral(
         R"(\A(?=[\s\S]*[\p{L}\p{Nd}])[^\p{Cc}\p{Cs}\p{Zl}\p{Zp}]+\z)"));
     return pattern.match(value).hasMatch();
@@ -25,8 +23,6 @@ bool normalizeEmail(QString &value) {
     static const QRegularExpression spaces(QStringLiteral(R"(\s+)"),
                                            QRegularExpression::UseUnicodePropertiesOption);
     value.remove(spaces);
-    // По условию имя пользователя — только латинские буквы и цифры.
-    // Точки разделяют части домена; подчёркивания и дефисы не разрешены.
     static const QRegularExpression pattern(
         QStringLiteral(R"(\A[A-Za-z0-9]+@[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*\z)"));
     if (!pattern.match(value).hasMatch())
@@ -39,8 +35,6 @@ bool normalizeEmail(QString &value) {
 
 bool normalizePhone(const QString &input, QString &digits) {
     const QString text = input.simplified();
-    // Международный префикс: + или 00. Также принимаем российский префикс 8.
-    // Скобки должны содержать цифры и быть закрыты; разделители — пробел и дефис.
     static const QRegularExpression format(QStringLiteral(
         R"(\A(?:\+ *|00 *|8 *)(?:[0-9]+|\([0-9]+\))(?:[ -]?(?:[0-9]+|\([0-9]+\)))*\z)"));
     if (!format.match(text).hasMatch())
@@ -53,14 +47,11 @@ bool normalizePhone(const QString &input, QString &digits) {
     if (text.startsWith(QStringLiteral("00"))) {
         result.remove(0, 2);
     } else if (!text.startsWith('+')) {
-        // Внутрироссийская запись допустима только для 11 цифр с начальной 8.
         if (result.size() != 11)
             return false;
         result[0] = QChar('7');
     }
 
-    // Учебная проверка международного номера: 7–15 цифр, первая не ноль.
-    // Существование номера у оператора регулярным выражением не проверяется.
     static const QRegularExpression number(QStringLiteral(R"(\A[1-9][0-9]{6,14}\z)"));
     if (!number.match(result).hasMatch())
         return false;
@@ -78,7 +69,6 @@ bool parseBirthDate(const QString &input, QDate &date) {
 
     const QDate result(match.captured(3).toInt(), match.captured(2).toInt(),
                        match.captured(1).toInt());
-    // QDate проверяет длину месяца и високосный год.
     if (!result.isValid() || result >= QDate::currentDate())
         return false;
 
@@ -134,4 +124,4 @@ bool normalizeContact(Contact &contact, QString &error) {
     return true;
 }
 
-} // namespace Validation
+} 

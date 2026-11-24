@@ -25,7 +25,6 @@
 
 namespace {
 
-// Обычные столбцы сортируются по тексту с учётом локали.
 class TextItem : public QTableWidgetItem {
 public:
     explicit TextItem(const QString &text) : QTableWidgetItem(text) {}
@@ -35,7 +34,6 @@ public:
     }
 };
 
-// Дату сравниваем как QDate, иначе 01.12.2000 оказалось бы раньше 02.01.1990.
 class DateItem : public QTableWidgetItem {
 public:
     explicit DateItem(const QDate &date) : QTableWidgetItem(date.toString("dd.MM.yyyy")) {
@@ -159,7 +157,6 @@ int MainWindow::selectedContactIndex() const {
     const QTableWidgetItem *item = table->item(row, 0);
     if (!item)
         return -1;
-    // Номер строки после сортировки меняется. Индекс модели хранится в самой ячейке.
     const int index = item->data(Qt::UserRole).toInt();
     return index >= 0 && index < contacts.size() ? index : -1;
 }
@@ -167,7 +164,6 @@ int MainWindow::selectedContactIndex() const {
 void MainWindow::refreshTable(int selectedIndex) {
     const int sortColumn = table->horizontalHeader()->sortIndicatorSection();
     const Qt::SortOrder order = table->horizontalHeader()->sortIndicatorOrder();
-    // При заполнении сортировка должна быть выключена, иначе строки сместятся посреди вставки.
     table->setSortingEnabled(false);
     table->clearContents();
     table->setRowCount(contacts.size());
@@ -190,7 +186,6 @@ void MainWindow::refreshTable(int selectedIndex) {
     table->setSortingEnabled(true);
     table->sortItems(sortColumn, order);
     table->resizeColumnsToContents();
-    // Длинный адрес или список номеров не должен растянуть столбец на весь экран.
     for (int column = 0; column < table->columnCount(); ++column)
         table->setColumnWidth(column, qBound(100, table->columnWidth(column), 260));
     applyFilters();
